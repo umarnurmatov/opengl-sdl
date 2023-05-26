@@ -29,6 +29,34 @@ void initSDL_Image()
     }
 }
 
+void flipSurfaceVertical(SDL_Surface* surface)
+{
+    SDL_LockSurface(surface);
+
+    // SDL_PixelFormat* pf = surface->format;
+    // if(surface->format->BitsPerPixel != 8)
+    // {
+    //     std::cerr << std::source_location::current().function_name() << ": not an 8 bit image!" << std::endl;
+    //     return;
+    // }
+
+    char* pixels = (char*)surface->pixels;
+    int pitch = surface->pitch;
+    char buffer[pitch];
+
+    for(int i = 0; i < static_cast<int>(surface->h/2); i++)
+    {
+        char* row1 = pixels + i*pitch;
+        char* row2 = pixels + (surface->h - i - 1)*pitch;
+
+        SDL_memcpy(buffer, row1, pitch);
+        SDL_memcpy(row1, row2, pitch);
+        SDL_memcpy(row2, buffer, pitch);
+    }
+
+    SDL_UnlockSurface(surface);
+}
+
 SDL_Surface* loadImage(const char* path)
 {
     // load sample.png in to image
@@ -97,7 +125,7 @@ int main()
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
 
-    Shader shader(getShaderPath("shader.vs"), getShaderPath("shader.frag"));
+    Shader shader(getShaderPath("shader_lesson_1.6.vs"), getShaderPath("shader_lesson_1.6.frag"));
 
     // Привязываем VAO
     glBindVertexArray(VAO);
@@ -135,7 +163,9 @@ int main()
 
     SDL_Surface* image1 = loadImage(getResPath("img2.jpg").c_str());
     SDL_Surface* image2 = loadImage(getResPath("img.jpg").c_str());
-    
+    flipSurfaceVertical(image1);
+    flipSurfaceVertical(image2);
+
 
     ////////////
     // ТЕКСТУРА 1
