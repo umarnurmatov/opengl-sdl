@@ -5,7 +5,8 @@
 #include <sstream>
 #include <iostream>
 
-
+namespace MyGL
+{
 class Shader
 {
 public:
@@ -91,4 +92,5 @@ private:
         }
         s = ss.str();
     }
+};
 };

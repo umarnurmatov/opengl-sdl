@@ -1,4 +1,4 @@
-
+#include <unordered_map>
 #include <iostream>
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
@@ -9,6 +9,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "Shader.hpp"
+#include "Camera.hpp"
 #include "MySDL.hpp"
 #include "Utils.hpp"
 
@@ -26,6 +27,8 @@ int main()
         1080, 
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
+    std::cout << SDL_SetRelativeMouseMode(SDL_TRUE);
+
     MySDL::initSDL_Image();
 
     SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -37,7 +40,7 @@ int main()
     SDL_GetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    Shader shader(Utils::getShaderPath("shader_lesson_1.8.vs"), Utils::getShaderPath("shader_lesson_1.8.fs"));
+    MyGL::Shader shader(Utils::getShaderPath("shader_lesson_1.8.vs"), Utils::getShaderPath("shader_lesson_1.8.fs"));
 
     float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -151,32 +154,46 @@ int main()
 
     SDL_Event event;
     bool quit = 0;
+
+    MyGL::Camera camera;
+    MySDL::Keyboard keyboard;
+    
+    auto pTime = SDL_GetTicks64();
+    auto cTime = pTime;
     while(!quit)
     {
+        cTime = SDL_GetTicks64();
         while(SDL_PollEvent(&event))
         {
-            if(event.type == SDL_QUIT)
+            switch(event.type) 
             {
+            case SDL_QUIT:
                 quit = true;
-            }
-            else if(event.type == SDL_KEYDOWN)
-            {
-                switch (event.key.keysym.sym)
+                break; 
+            case SDL_KEYDOWN:
+                switch(event.key.keysym.sym)
                 {
                 case SDLK_q:
                     if(SDL_GetModState() & KMOD_CTRL) quit = true;
                     break;
                 }
+                break;
+            case SDL_MOUSEMOTION:
+                camera.processMouseMove(event.motion.xrel, event.motion.yrel);
+                break;
             }
+
+            keyboard.pollEvent(event);
         }
+
+        camera.processKeyboard(keyboard, cTime - pTime);
+
         glClearColor(0.65098f, 0.062745f, 0.117647f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
-        
-        glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
+        glm::mat4 view;
+        view = camera.getView(); 
+    
         glm::mat4 proj;
         proj = glm::perspective(glm::radians(45.f), static_cast<float>(width / height), 0.1f, 100.0f);
 
@@ -192,7 +209,7 @@ int main()
         {
             glm::mat4 model(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            if(i%3 == 0) model = glm::rotate(model, glm::radians(static_cast<float>(SDL_GetTicks64()) / 90.f), glm::vec3(1.0f, 0.2f, 0.3f));
+            model = glm::rotate(model, glm::radians(static_cast<float>(SDL_GetTicks64()) / 90.f), glm::vec3(1.0f, 0.2f, 0.3f));
    
             glUniformMatrix4fv(shader.getLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -203,6 +220,8 @@ int main()
  
            
         SDL_GL_SwapWindow(window); // swapping buffers
+
+        pTime = cTime;
     }
 
     SDL_DestroyWindow(window);
