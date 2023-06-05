@@ -2,6 +2,14 @@
 
 namespace MySDL
 {
+void initSDL(unsigned int flags)
+{
+    if(SDL_Init(flags) < 0)
+    {
+        std::cerr << "SDL_Init: " << SDL_GetError() << std::endl;
+    }
+}
+
 void initSDL_Image()
 {
     // load support for the JPG and PNG image formats

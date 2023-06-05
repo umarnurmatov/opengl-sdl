@@ -64,6 +64,11 @@ public:
         return glm::lookAt(m_pos, m_pos + m_front, m_up);
     }
 
+    glm::vec3 getPos()
+    {
+        return m_pos;
+    }
+
 private:
     glm::vec3 m_pos;
     glm::vec3 m_front;

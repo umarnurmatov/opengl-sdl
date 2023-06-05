@@ -5,6 +5,7 @@
 
 namespace MySDL
 {
+void initSDL(unsigned int flags);
 void initSDL_Image();
 void flipSurfaceVertical(SDL_Surface* surface);
 SDL_Surface* loadImage(const char* path);
