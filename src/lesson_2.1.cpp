@@ -144,6 +144,9 @@ int main()
                 }
                 camera.processMouseMove(event.motion.xrel, event.motion.yrel);
                 break;
+            case SDL_MOUSEWHEEL:
+                camera.processMouseWheel(event.wheel.y);
+                break;
             }
 
             keyboard.pollEvent(event);
@@ -157,7 +160,7 @@ int main()
         glm::mat4 model(1.0f), view, proj;
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 3.0f));
         view = camera.getView();
-        proj = glm::perspective(glm::radians(45.f), static_cast<GLfloat>(wWidth / wHeight), 0.1f, 100.0f);
+        proj = glm::perspective(glm::radians(camera.getFOV()), static_cast<GLfloat>(wWidth / wHeight), 0.1f, 100.0f);
 
         glm::mat3 norm;
         norm = glm::mat3(glm::transpose(glm::inverse(model)));

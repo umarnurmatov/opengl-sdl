@@ -16,7 +16,8 @@ public:
           m_front{0.0f, 0.0f, -1.0f},
           m_up{0.0f, 1.0f, 0.0f},
           m_pitch{0.0f},
-          m_yaw{0.0f}
+          m_yaw{0.0f},
+          m_fov{45.f}
     {
     }
 
@@ -59,6 +60,12 @@ public:
         m_front = glm::normalize(front);
     }
 
+    void processMouseWheel(float y)
+    {
+        GLfloat sense = 0.5f;
+        m_fov += sense * y;
+    }
+
     glm::mat4 getView()
     {
         return glm::lookAt(m_pos, m_pos + m_front, m_up);
@@ -69,11 +76,18 @@ public:
         return m_pos;
     }
 
+    GLfloat getFOV()
+    {
+        return m_fov;
+    }
+
 private:
     glm::vec3 m_pos;
     glm::vec3 m_front;
     glm::vec3 m_up;
     GLfloat m_speed;
+
+    GLfloat m_fov;
 
     GLfloat m_yaw;
     GLfloat m_pitch;
