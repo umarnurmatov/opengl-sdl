@@ -3,6 +3,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
 
 #include "Utils.hpp"
 #include "Shader.hpp"
@@ -69,8 +72,18 @@ int main()
     MySDL::initSDL_Image();
 
     MySDL::setGLAttributes();
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     gladLoadGLLoader(static_cast<GLADloadproc>(SDL_GL_GetProcAddress));
+
+    //// IMGUI ////
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); 
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+    ///////////////
 
     int wHeight, wWidth;
     SDL_GetWindowSize(window, &wWidth, &wHeight);
@@ -121,8 +134,10 @@ int main()
     while(!quit)
     {
         cTime = SDL_GetTicks64();
+
         while(SDL_PollEvent(&event))
         {
+            ImGui_ImplSDL2_ProcessEvent(&event);
             switch(event.type) 
             {
             case SDL_QUIT:
@@ -134,6 +149,10 @@ int main()
                 case SDLK_q:
                     if(SDL_GetModState() & KMOD_CTRL) quit = true;
                     break;
+                case SDLK_i:
+                    if(SDL_GetRelativeMouseMode()) SDL_SetRelativeMouseMode(SDL_FALSE);
+                    else SDL_SetRelativeMouseMode(SDL_TRUE);
+                    break;
                 }
                 break;
             case SDL_MOUSEMOTION:
@@ -142,6 +161,9 @@ int main()
                     first = false;
                     break;
                 }
+                if(io.WantCaptureMouse)
+                   break; 
+                 
                 camera.processMouseMove(event.motion.xrel, event.motion.yrel);
                 break;
             case SDL_MOUSEWHEEL:
@@ -151,6 +173,12 @@ int main()
 
             keyboard.pollEvent(event);
         }
+        
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
 
         camera.processKeyboard(keyboard, cTime - pTime);
 
@@ -198,11 +226,18 @@ int main()
         glBindVertexArray(0);
 
         pTime = cTime;
-
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
 
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
+    SDL_Quit(); 
 
     return 0;
 }
