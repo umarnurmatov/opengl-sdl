@@ -56,6 +56,7 @@ SDL_Surface* loadImage(const char* path)
     // load sample.png in to image
     SDL_Surface *image;
     image=IMG_Load_RW(SDL_RWFromFile(path, "rb"), 1);
+    std::cout << SDL_GetPixelFormatName(image->format->format) << std::endl;
     if(!image)
     {
         std::cerr << "IMG_Load_RW: \\n" << IMG_GetError() << std::endl;
