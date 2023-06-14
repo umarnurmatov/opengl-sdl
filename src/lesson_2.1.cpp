@@ -7,12 +7,18 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 
-#include "Utils.hpp"
-#include "Shader.hpp"
-#include "Keyboard.hpp"
-#include "Camera.hpp"
-#include "MySDL.hpp"
-#include "Texture.hpp"
+#include "Utils/Utils.hpp"
+#include "Base/Shader.hpp"
+#include "MySDL/Keyboard.hpp"
+#include "Camera/Camera.hpp"
+#include "MySDL/SDLUtils.hpp"
+#include "Render/Texture/Texture.hpp"
+#include "Render/Light/DirectLight.hpp"
+#include "Render/Light/PointLight.hpp"
+#include "Render/Light/SpotLight.hpp"
+
+#define NR_POINT_LIGHTS 4 // see also shader.fs for MAX_NR_POINT_LIGHTS
+#define NR_SPOT_LIGHTS 1 // see also shader.fs
 
 float vertices[] = {
     // positions          // normals           // texture coords
@@ -58,6 +64,27 @@ float vertices[] = {
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
+
+glm::vec3 cubePositions[] = 
+{
+    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 2.0f,  5.0f, -15.0f), 
+    glm::vec3(-1.5f, -2.2f, -2.5f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3( 2.4f, -0.4f, -3.5f),  
+    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( 1.5f,  2.0f, -2.5f), 
+    glm::vec3( 1.5f,  0.2f, -1.5f), 
+    glm::vec3(-1.3f,  1.0f, -1.5f)  
+};
+
+glm::vec3 pointLightPositions[] = {
+	glm::vec3( 0.7f,  0.2f,  2.0f),
+	glm::vec3( 2.3f, -3.3f, -4.0f),
+	glm::vec3(-4.0f,  2.0f, -12.0f),
+	glm::vec3( 0.0f,  0.0f, -3.0f)
+};  
 
 int main()
 {
@@ -136,11 +163,21 @@ int main()
     MySDL::Keyboard keyboard;
     MyGL::Camera camera;
 
+    DirectLight directLight;
+    PointLight pointLight[NR_POINT_LIGHTS];
+    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+    {
+        pointLight[i].setPosition(pointLightPositions[i]);
+    }
+    SpotLight spotLight[NR_SPOT_LIGHTS];
+    for(int i = 0; i < NR_SPOT_LIGHTS; i++)
+    {
+        spotLight[i].setPosition({1.0f, 1.0f, 1.0f});
+    }
+
     float cTime = SDL_GetTicks64();
     float pTime = cTime;
 
-    glm::vec3 lightPos(1.2f, 0.0f, 2.0f);
-    glm::vec3 lightColor(1.0f);
     bool first = true;
     while(!quit)
     {
@@ -196,23 +233,9 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 model(1.0f), view, proj;
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 3.0f));
-        view = camera.getView();
-        proj = glm::perspective(glm::radians(camera.getFOV()), static_cast<float>(wWidth) / static_cast<float>(wHeight), 0.1f, 100.0f);
-
-        glm::mat3 norm;
-        norm = glm::mat3(glm::transpose(glm::inverse(model)));
-
-        glm::vec3 camPos = camera.getPos();
-
         containerShader.use();
 
-        glUniformMatrix4fv(containerShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(containerShader.getLoc("view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(containerShader.getLoc("proj"), 1, GL_FALSE, glm::value_ptr(proj));
-        glUniformMatrix3fv(containerShader.getLoc("norm"), 1, GL_FLOAT, glm::value_ptr(norm));
-
+        glm::vec3 camPos = camera.getPos();
         glUniform3fv(containerShader.getLoc("viewPos"), 1, glm::value_ptr(camPos));
 
         glActiveTexture(GL_TEXTURE0);
@@ -221,33 +244,62 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
         glUniform1f(containerShader.getLoc("material.shininess"), 64.0f);
 
-        glUniform3f(containerShader.getLoc("light.pos"), lightPos.x, lightPos.y, lightPos.z);
-        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-        glm::vec3 ambientColor = lightColor * glm::vec3(0.2f);
-        glUniform3fv(containerShader.getLoc("light.diffuse"), 1, glm::value_ptr(diffuseColor));
-        glUniform3fv(containerShader.getLoc("light.ambient"), 1, glm::value_ptr(ambientColor));
-        glUniform3f(containerShader.getLoc("light.specular"), 1.0f, 1.0f, 1.0f);
+        ////////////// light
+        directLight.render(containerShader);
+        glUniform1i(containerShader.getLoc("NR_POINT_LIGHTS"), NR_POINT_LIGHTS);
+        for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        {
+            std::string prefix = "pointLight[" + std::to_string(i) + "]";
+            pointLight[i].render(containerShader, prefix);
+        }
+        glUniform1i(containerShader.getLoc("NR_SPOT_LIGHTS"), NR_SPOT_LIGHTS);
+        for(int i = 0; i < NR_SPOT_LIGHTS; i++)
+        {
+            std::string prefix = "spotLight[" + std::to_string(i) + "]";
+            spotLight[i].render(containerShader, prefix);
+        }
 
-        // render cube
+        glm::mat4 view, proj;
+        view = camera.getView();
+        proj = glm::perspective(glm::radians(camera.getFOV()), static_cast<float>(wWidth) / static_cast<float>(wHeight), 0.1f, 100.0f);
+
+        glUniformMatrix4fv(containerShader.getLoc("view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(containerShader.getLoc("proj"), 1, GL_FALSE, glm::value_ptr(proj));
+
         glBindVertexArray(containerVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36); 
+        for(unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 model(1.);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            glUniformMatrix4fv(containerShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model));
+
+            glm::mat3 norm;
+            norm = glm::mat3(glm::transpose(glm::inverse(model)));
+            glUniformMatrix3fv(containerShader.getLoc("norm"), 1, GL_FLOAT, glm::value_ptr(norm));
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         glBindVertexArray(0);
 
         lightShader.use();
 
-        glm::mat4 model_light(1.0f);
-        model_light = glm::translate(model_light, lightPos);
-        model_light = glm::scale(model_light, glm::vec3(0.2f));
-
-        glUniformMatrix4fv(lightShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model_light));
         glUniformMatrix4fv(lightShader.getLoc("view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(lightShader.getLoc("proj"), 1, GL_FALSE, glm::value_ptr(proj));
 
-        glUniform3f(lightShader.getLoc("lightColor"), lightColor.x, lightColor.y, lightColor.z);
-
-        // render light
         glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36); 
+        for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        {
+            glm::mat4 model_light(1.0f);
+            model_light = glm::translate(model_light, pointLight[i].getPosition());
+            model_light = glm::scale(model_light, glm::vec3(0.2f));
+            glUniformMatrix4fv(lightShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model_light));
+
+            glUniform3fv(lightShader.getLoc("lightColor"), 1, glm::value_ptr(pointLight[i].getColor()));
+
+            glDrawArrays(GL_TRIANGLES, 0, 36); 
+        }
         glBindVertexArray(0);
 
         pTime = cTime;

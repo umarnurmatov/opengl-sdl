@@ -1,4 +1,4 @@
-#include "MySDL.hpp"
+#include "SDLUtils.hpp"
 
 namespace MySDL
 {

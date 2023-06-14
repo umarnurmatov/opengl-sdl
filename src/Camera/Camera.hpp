@@ -4,7 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 
-#include "Keyboard.hpp"
+#include "../MySDL/Keyboard.hpp"
 
 namespace MyGL
 {
