@@ -27,7 +27,8 @@ target_link_libraries(${NAME} PRIVATE
     ${SDL2_LIBRARIES}
     SDL2_image::SDL2_image
     glad
-    glm)
+    glm
+    assimp)
 
 target_compile_definitions(${NAME} PUBLIC MY_SHADER_PATH="${CMAKE_SOURCE_DIR}/shaders/")
 target_compile_definitions(${NAME} PUBLIC MY_RESOURCE_PATH="${CMAKE_SOURCE_DIR}/res/")
