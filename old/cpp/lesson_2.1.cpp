@@ -12,10 +12,11 @@
 #include "MySDL/Keyboard.hpp"
 #include "Camera/Camera.hpp"
 #include "MySDL/SDLUtils.hpp"
-#include "Render/Texture/Texture.hpp"
-#include "Render/Light/DirectLight.hpp"
-#include "Render/Light/PointLight.hpp"
-#include "Render/Light/SpotLight.hpp"
+#include "Render/Texture.hpp"
+#include "Render/DirectLight.hpp"
+#include "Render/PointLight.hpp"
+#include "Render/SpotLight.hpp"
+#include "Render/Mesh.hpp"
 
 #define NR_POINT_LIGHTS 4 // see also shader.fs for MAX_NR_POINT_LIGHTS
 #define NR_SPOT_LIGHTS 1 // see also shader.fs

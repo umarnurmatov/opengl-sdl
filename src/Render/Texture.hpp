@@ -1,6 +1,6 @@
 #pragma once
 #include "glad/glad.h"
-#include "MySDL/SDLUtils.hpp"
+#include "SDLUtils.hpp"
 
 namespace MyGL
 {

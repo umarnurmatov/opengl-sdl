@@ -14,7 +14,11 @@ add_executable(${NAME}
     ${IMGUI_DIR}/imgui_widgets.cpp)
 
 target_include_directories(${NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Base
+    ${CMAKE_CURRENT_SOURCE_DIR}/Camera
+    ${CMAKE_CURRENT_SOURCE_DIR}/MySDL
+    ${CMAKE_CURRENT_SOURCE_DIR}/Render
+    ${CMAKE_CURRENT_SOURCE_DIR}/Utils)
 
 
 find_package(SDL2 REQUIRED)

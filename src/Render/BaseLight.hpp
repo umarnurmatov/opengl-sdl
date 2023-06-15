@@ -2,7 +2,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "Base/Shader.hpp"
+#include "Shader.hpp"
 #include <string>
 
 class BaseLight
