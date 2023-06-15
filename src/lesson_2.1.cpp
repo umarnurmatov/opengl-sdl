@@ -229,6 +229,7 @@ int main()
         //ImGui::ShowDemoWindow();
 
         camera.processKeyboard(keyboard, cTime - pTime);
+        for(auto& s : spotLight) { s.setPosition(camera.getPos()); s.setDirection(camera.getFront()); }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

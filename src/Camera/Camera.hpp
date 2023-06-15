@@ -21,9 +21,9 @@ public:
 
     glm::mat4 getView();
 
-    glm::vec3 getPos();
-
-    GLfloat getFOV();
+    const glm::vec3& getPos() const { return m_pos; };
+    const glm::vec3& getFront() const { return m_front; }
+    GLfloat getFOV() const { return m_fov; }
 
 private:
     glm::vec3 m_pos;

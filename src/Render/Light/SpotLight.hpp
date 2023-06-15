@@ -9,15 +9,14 @@ class SpotLight : public BaseLight
 public:
     SpotLight()
     : m_constant{1.0f},
-      m_linear{0.35f},
-      m_quadratic{0.44f},
+      m_linear{0.022f},
+      m_quadratic{0.0019f},
 
       m_position{1.0f},
-      m_direction{1.0f},
-      
-      m_cutOffIn{25.0f},
-      m_cutOffOut{35.0f}
-    {}
+      m_direction{1.0f}
+    {
+        setCutOff(12.5f, 17.5f);
+    }
 
     void render(MyGL::Shader &shader, std::string prefix) override
     {
@@ -33,8 +32,8 @@ public:
         glUniform1f(shader.getLoc(string(prefix + ".linear")), m_linear);
         glUniform1f(shader.getLoc(string(prefix + ".quadratic")), m_quadratic);
 
-        glUniform1f(shader.getLoc(string(prefix + ".cutOffIn")), glm::cos(glm::radians(m_cutOffIn)));
-        glUniform1f(shader.getLoc(string(prefix + ".curOffOut")), glm::cos(glm::radians(m_cutOffOut)));
+        glUniform1f(shader.getLoc(string(prefix + ".cutOffIn")), m_cutOffIn);
+        glUniform1f(shader.getLoc(string(prefix + ".cutOffOut")), m_cutOffOut);
     };
 
     void setPosition(glm::vec3 value) { m_position = value; }
@@ -42,6 +41,8 @@ public:
 
     void setDirection(glm::vec3 value) { m_direction = value; }
     const glm::vec3& getDirection() { return m_direction; }
+
+    void setCutOff(float in, float out) { m_cutOffIn = glm::cos(glm::radians(in)); m_cutOffOut = glm::cos(glm::radians(out)); }
 
 private:
     glm::vec3 m_direction;

@@ -63,14 +63,7 @@ glm::mat4 Camera::getView()
     return glm::lookAt(m_pos, m_pos + m_front, m_up);
 }
 
-glm::vec3 Camera::getPos()
-{
-    return m_pos;
-}
 
-GLfloat Camera::getFOV()
-{
-    return m_fov;
-}
+
 
 };
