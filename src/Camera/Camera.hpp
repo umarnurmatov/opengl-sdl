@@ -4,36 +4,40 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 
-#include "../MySDL/Keyboard.hpp"
+#include "Keyboard.hpp"
+#include "Log.hpp"
 
-namespace MyGL
+
+namespace Engine
 {
+
 class Camera
 {
 public:
     Camera();
 
-    void processKeyboard(MySDL::Keyboard& keys, float dt);
+    void processKeyboard(Keyboard& keys, float dt);
 
     void processMouseMove(float xrel, float yrel);
 
     void processMouseWheel(float y);
 
-    glm::mat4 getView();
+    glm::mat4 getView() const;
 
-    const glm::vec3& getPos() const { return m_pos; };
-    const glm::vec3& getFront() const { return m_front; }
-    GLfloat getFOV() const { return m_fov; }
+    const glm::vec3& getPos() const { return pos; };
+    const glm::vec3& getFront() const { return front; }
+    GLfloat getFOV() const { return fov; }
 
 private:
-    glm::vec3 m_pos;
-    glm::vec3 m_front;
-    glm::vec3 m_up;
-    GLfloat m_speed;
+    glm::vec3 pos;
+    glm::vec3 front;
+    glm::vec3 up;
+    GLfloat speed;
 
-    GLfloat m_fov;
+    GLfloat fov;
 
-    GLfloat m_yaw;
-    GLfloat m_pitch;
+    GLfloat yaw;
+    GLfloat pitch;
 };
+
 };

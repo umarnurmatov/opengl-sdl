@@ -2,21 +2,22 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 
-#include "Utils/Utils.hpp"
+#include "Filesystem/Filesystem.hpp"
 #include "Base/Shader.hpp"
-#include "MySDL/Keyboard.hpp"
+#include "IO/Keyboard.hpp"
 #include "Camera/Camera.hpp"
-#include "MySDL/SDLUtils.hpp"
-#include "Render/Texture.hpp"
 #include "Render/DirectLight.hpp"
 #include "Render/PointLight.hpp"
 #include "Render/SpotLight.hpp"
 #include "Render/Mesh.hpp"
+#include "Render/Model.hpp"
 
 #define NR_POINT_LIGHTS 4 // see also shader.fs for MAX_NR_POINT_LIGHTS
 #define NR_SPOT_LIGHTS 1 // see also shader.fs
@@ -89,7 +90,18 @@ glm::vec3 pointLightPositions[] = {
 
 int main()
 {
-    MySDL::initSDL(SDL_INIT_VIDEO);
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
+        Engine::logCritical(SDL_GetError());
+    }
+
+    int SDL_Image_flags = IMG_INIT_JPG | IMG_INIT_PNG;
+    int SDL_Image_init  = IMG_Init(SDL_Image_flags);
+    if((SDL_Image_init & SDL_Image_flags) != SDL_Image_flags) 
+    {
+        Engine::logCritical(IMG_GetError());
+    }
+
     SDL_Window* window = SDL_CreateWindow(
         "Lightning",
         SDL_WINDOWPOS_CENTERED,
@@ -99,9 +111,10 @@ int main()
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
-    MySDL::initSDL_Image();
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE); // using only modern functions
 
-    MySDL::setGLAttributes();
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     gladLoadGLLoader(static_cast<GLADloadproc>(SDL_GL_GetProcAddress));
 
@@ -126,55 +139,38 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     
-    MyGL::Shader containerShader(Utils::getShaderPath("shader.vs"), Utils::getShaderPath("shader.fs"));
-    MyGL::Shader lightShader(Utils::getShaderPath("lightShader.vs"), Utils::getShaderPath("lightShader.fs"));
+    Engine::Shader modelShader(Engine::getShaderPath("shader.vs"), Engine::getShaderPath("shader.fs"));
+    Engine::Shader lightShader(Engine::getShaderPath("lightShader.vs"), Engine::getShaderPath("lightShader.fs"));
 
-    GLuint containerVAO, VBO; 
-    glGenVertexArrays(1, &containerVAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(containerVAO);
+    GLuint lightVAO, VBO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), reinterpret_cast<GLvoid*>(0));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), reinterpret_cast<GLvoid*>(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), reinterpret_cast<GLvoid*>(6 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
     glBindVertexArray(0);
-
-    GLuint lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), reinterpret_cast<GLvoid*>(0));
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
-
-    GLuint diffuseMap = MyGL::loadTexture(Utils::getResPath("container.jpg"));
-    GLuint specularMap = MyGL::loadTexture(Utils::getResPath("container2_specular.jpg"));
-    containerShader.use();
-    glUniform1i(containerShader.getLoc("material.diffuse"), 0);
-    glUniform1i(containerShader.getLoc("material.specular"), 1);
-
+   
     bool quit = false;
     SDL_Event event;
 
-    MySDL::Keyboard keyboard;
-    MyGL::Camera camera;
+    Engine::Keyboard keyboard;
+    Engine::Camera camera;
 
-    DirectLight directLight;
-    PointLight pointLight[NR_POINT_LIGHTS];
+    Engine::DirectLight directLight;
+    Engine::PointLight pointLight[NR_POINT_LIGHTS];
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
     {
         pointLight[i].setPosition(pointLightPositions[i]);
     }
-    SpotLight spotLight[NR_SPOT_LIGHTS];
+    Engine::SpotLight spotLight[NR_SPOT_LIGHTS];
     for(int i = 0; i < NR_SPOT_LIGHTS; i++)
     {
         spotLight[i].setPosition({1.0f, 1.0f, 1.0f});
     }
+
+    Engine::Model backpackModel(Engine::getResPath("backpack/backpack.obj"));
+
 
     float cTime = SDL_GetTicks64();
     float pTime = cTime;
@@ -212,7 +208,6 @@ int main()
                 }
                 if(io.WantCaptureMouse)
                    break; 
-                 
                 camera.processMouseMove(event.motion.xrel, event.motion.yrel);
                 break;
             case SDL_MOUSEWHEEL:
@@ -235,55 +230,42 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        containerShader.use();
+        modelShader.use();
 
         glm::vec3 camPos = camera.getPos();
-        glUniform3fv(containerShader.getLoc("viewPos"), 1, glm::value_ptr(camPos));
+        glUniform3fv(modelShader.getLoc("viewPos"), 1, glm::value_ptr(camPos));
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, specularMap);
-        glUniform1f(containerShader.getLoc("material.shininess"), 64.0f);
-
+        
         ////////////// light
-        directLight.render(containerShader);
-        glUniform1i(containerShader.getLoc("NR_POINT_LIGHTS"), NR_POINT_LIGHTS);
+        directLight.render(modelShader);
+        glUniform1i(modelShader.getLoc("NR_POINT_LIGHTS"), NR_POINT_LIGHTS);
         for(int i = 0; i < NR_POINT_LIGHTS; i++)
         {
             std::string prefix = "pointLight[" + std::to_string(i) + "]";
-            pointLight[i].render(containerShader, prefix);
+            pointLight[i].render(modelShader, prefix);
         }
-        glUniform1i(containerShader.getLoc("NR_SPOT_LIGHTS"), NR_SPOT_LIGHTS);
+        glUniform1i(modelShader.getLoc("NR_SPOT_LIGHTS"), NR_SPOT_LIGHTS);
         for(int i = 0; i < NR_SPOT_LIGHTS; i++)
         {
             std::string prefix = "spotLight[" + std::to_string(i) + "]";
-            spotLight[i].render(containerShader, prefix);
+            spotLight[i].render(modelShader, prefix);
         }
 
         glm::mat4 view, proj;
         view = camera.getView();
         proj = glm::perspective(glm::radians(camera.getFOV()), static_cast<float>(wWidth) / static_cast<float>(wHeight), 0.1f, 100.0f);
 
-        glUniformMatrix4fv(containerShader.getLoc("view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(containerShader.getLoc("proj"), 1, GL_FALSE, glm::value_ptr(proj));
+        glUniformMatrix4fv(modelShader.getLoc("view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(modelShader.getLoc("proj"), 1, GL_FALSE, glm::value_ptr(proj));
 
-        glBindVertexArray(containerVAO);
-        for(unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model(1.);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            glUniformMatrix4fv(containerShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model));
+        glm::mat4 model(1.);
+        glUniformMatrix4fv(modelShader.getLoc("model"), 1, GL_FALSE, glm::value_ptr(model));
 
-            glm::mat3 norm;
-            norm = glm::mat3(glm::transpose(glm::inverse(model)));
-            glUniformMatrix3fv(containerShader.getLoc("norm"), 1, GL_FLOAT, glm::value_ptr(norm));
+        glm::mat3 norm;
+        norm = glm::mat3(glm::transpose(glm::inverse(model)));
+        glUniformMatrix3fv(modelShader.getLoc("norm"), 1, GL_FLOAT, glm::value_ptr(norm));
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-        glBindVertexArray(0);
+        backpackModel.draw(modelShader);
 
         lightShader.use();
 

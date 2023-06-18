@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-namespace MySDL
+namespace Engine
 {
 class Keyboard
 {
@@ -13,6 +13,6 @@ public:
     bool isKeyPressed(SDL_Keycode keycode);
 
 private:
-    std::unordered_map<SDL_Keycode, bool> m_keys;
+    std::unordered_map<SDL_Keycode, bool> keys;
 };
 };

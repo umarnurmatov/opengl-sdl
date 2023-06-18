@@ -1,23 +1,28 @@
 #pragma once
-
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <vector>
 
 #include "Shader.hpp"
+#include "Log.hpp"
+
+
+namespace Engine
+{
 
 struct Vertex
 {
     glm::vec3 pos;
     glm::vec3 normal;
-    glm::vec3 texCoords;
+    glm::vec2 texCoords;
 };
 
 struct Texture
 {
     GLuint id;
     enum Type { SPECULAR, DIFFUSE } type;
+    std::string path;
 };
     
 class Mesh    
@@ -28,9 +33,11 @@ public:
     std::vector<Texture> textures;
 
     Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
-    void draw(MyGL::Shader &shader) const;
+    void draw(Shader &shader) const;
 
 private:
-    GLuint m_VAO, m_VBO, m_EBO;
-    void m_setupMesh();
+    GLuint VAO, VBO, EBO;
+    void setupMesh();
+};
+
 };

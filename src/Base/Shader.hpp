@@ -1,12 +1,16 @@
 #pragma once
 #include <glad/glad.h>
+
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <iostream>
 
-namespace MyGL
+#include "Log.hpp"
+
+namespace Engine
 {
+
 class Shader
 {
 public:
@@ -20,10 +24,11 @@ public:
     GLuint& getProgram();
 
 private:
-    GLuint m_program;
+    GLuint program;
 
-    GLuint m_loadShader(std::string &path, GLenum type);
+    GLuint loadShader(std::string &path, GLenum type);
 
-    void m_readFile(std::string path, std::string &s);
+    void readFile(std::string path, std::string &s);
 };
+
 };

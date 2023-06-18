@@ -1,30 +1,37 @@
 #pragma once
-
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 #include <vector>
+#include <map>
 
 #include "Mesh.hpp"
+#include "TextureLoad.hpp"
+#include "Filesystem.hpp"
+
+
+namespace Engine
+{
 
 class Model 
 {
     public:
-        /*  Методы   */
         Model(std::string path)
         {
-            m_loadModel(path);
+            loadModel(path);
         }
-        void draw(MyGL::Shader& shader);	
-    private:
-        /*  Данные модели  */
-        std::vector<Mesh> m_meshes;
-        std::string m_directory;
+        void draw(Shader& shader);	
 
-        /*  Методы   */
-        void m_loadModel(std::string path);
-        void m_processNode(aiNode *node, const aiScene *scene);
-        Mesh m_processMesh(aiMesh *mesh, const aiScene *scene);
-        std::vector<Texture> m_loadMaterialTextures(aiMaterial *mat, aiTextureType type);
+    private:
+        std::vector<Mesh> meshes;
+        std::map<std::string, Texture> loadedTextures;
+        std::string modelDirectoryPath;
+
+        void loadModel(std::string path);
+        void processNode(aiNode *node, const aiScene *scene);
+        Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+        void loadMaterialTextures(std::vector<Texture> &textures, aiMaterial *mat, aiTextureType type);
+};
+
 };

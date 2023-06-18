@@ -16,9 +16,10 @@ add_executable(${NAME}
 target_include_directories(${NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Base
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera
-    ${CMAKE_CURRENT_SOURCE_DIR}/MySDL
+    ${CMAKE_CURRENT_SOURCE_DIR}/IO
     ${CMAKE_CURRENT_SOURCE_DIR}/Render
-    ${CMAKE_CURRENT_SOURCE_DIR}/Utils)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Filesystem
+    ${CMAKE_CURRENT_SOURCE_DIR}/Log)
 
 
 find_package(SDL2 REQUIRED)

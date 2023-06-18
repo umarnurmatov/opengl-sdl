@@ -1,7 +1,8 @@
-#include "Utils.hpp"
+#include "Filesystem.hpp"
 
-namespace Utils
+namespace Engine
 {
+
 std::string getShaderPath(std::string name)
 {
     static std::string prefix(MY_SHADER_PATH);
@@ -13,4 +14,5 @@ std::string getResPath(std::string name)
     static std::string prefix(MY_RESOURCE_PATH);
     return prefix + name;
 }
+
 };

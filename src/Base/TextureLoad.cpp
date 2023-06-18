@@ -1,11 +1,12 @@
-#include "Texture.hpp"
+#include "TextureLoad.hpp"
 
-namespace MyGL
+namespace Engine
 {
+
 GLuint loadTexture(std::string path)
 {
-    SDL_Surface* image2 = MySDL::loadImage(path.c_str());
-    MySDL::flipSurfaceVertical(image2);
+    SDL_Surface* image2 = loadImage(path.c_str());
+    flipSurfaceVertical(image2);
 
     GLuint tex;
     glGenTextures(1, &tex);
@@ -13,7 +14,7 @@ GLuint loadTexture(std::string path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -24,4 +25,5 @@ GLuint loadTexture(std::string path)
 
     return tex;
 }
+
 };
