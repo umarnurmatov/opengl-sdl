@@ -44,7 +44,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
 {
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
-    std::vector<Texture> textures;
+    std::vector<Texture*> textures;
 
     for(size_t i = 0; i < mesh->mNumVertices; i++)
     {
@@ -71,17 +71,14 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     if(mesh->mMaterialIndex >= 0)
     {
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<Texture> diffuseMap, specularMap;
-        loadMaterialTextures(diffuseMap, material, aiTextureType_DIFFUSE);
-        loadMaterialTextures(specularMap, material, aiTextureType_SPECULAR);
-        textures.insert(textures.end(), diffuseMap.begin(), diffuseMap.end());
-        textures.insert(textures.end(), specularMap.begin(), specularMap.end());
+        loadMaterialTextures(textures, material, aiTextureType_DIFFUSE);
+        loadMaterialTextures(textures, material, aiTextureType_SPECULAR);
     }
 
     return Mesh(vertices, indices, textures);
 }
 
-void Model::loadMaterialTextures(std::vector<Texture> &textures, aiMaterial *material, aiTextureType textureType)
+void Model::loadMaterialTextures(std::vector<Texture*> &textures, aiMaterial *material, aiTextureType textureType)
 {
     for(size_t i = 0; i < material->GetTextureCount(textureType); i++)
     {
@@ -89,19 +86,18 @@ void Model::loadMaterialTextures(std::vector<Texture> &textures, aiMaterial *mat
         aiString textureRelativePath_aiString;
         material->GetTexture(textureType, i, &textureRelativePath_aiString);
         std::string textureRelativePath = textureRelativePath_aiString.C_Str();
-        // std::cout << str.C_Str() << std::endl;
+        std::cout << textureRelativePath  << std::endl;
 
         if(loadedTextures.contains(textureRelativePath))
         {
-            textures.push_back(loadedTextures[textureRelativePath]);
+            textures.push_back(&loadedTextures[textureRelativePath]);
             return;
         }
 
         texture.id = loadTexture(modelDirectoryPath + textureRelativePath);
         texture.type = textureType == aiTextureType_DIFFUSE ? Texture::DIFFUSE : Texture::SPECULAR;
-        texture.path = textureRelativePath;
-        textures.push_back(texture);
         loadedTextures[textureRelativePath] = texture;
+        textures.push_back(&loadedTextures[textureRelativePath]);
     }
 }
 

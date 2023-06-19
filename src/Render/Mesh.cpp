@@ -3,7 +3,7 @@
 namespace Engine
 {
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures)
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture*>& textures)
 {
     this->vertices = vertices;
     this->indices = indices;
@@ -21,7 +21,7 @@ void Mesh::draw(Shader &shader) const
     {
         glActiveTexture(GL_TEXTURE0 + i);
         std::string suffix;
-        switch (textures[i].type)
+        switch (textures[i]->type)
         {
         case Texture::DIFFUSE:
             suffix = "texture_diffuse" + std::to_string(diffuseNr++);
@@ -33,7 +33,7 @@ void Mesh::draw(Shader &shader) const
             break;
         }
         glUniform1f(shader.getLoc("material."+suffix), i);
-        glBindTexture(GL_TEXTURE_2D, textures[i].id);
+        glBindTexture(GL_TEXTURE_2D, textures[i]->id);
     }
     glActiveTexture(GL_TEXTURE0);
 

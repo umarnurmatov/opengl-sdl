@@ -41,6 +41,7 @@ SDL_Surface* loadImage(const char* path)
         logCritical(IMG_GetError());
 
     logInfo(SDL_GetPixelFormatName(image->format->format));
+    logInfoFmt("Bytes per pixel: {}", static_cast<unsigned int>(image->format->BytesPerPixel));
     return image;
 }
 

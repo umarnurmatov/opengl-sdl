@@ -118,6 +118,8 @@ int main()
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     gladLoadGLLoader(static_cast<GLADloadproc>(SDL_GL_GetProcAddress));
 
+    Engine::GLDebugInit();
+
     //// IMGUI ////
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -206,11 +208,13 @@ int main()
                     first = false;
                     break;
                 }
-                if(io.WantCaptureMouse)
+                if(io.WantCaptureMouse || !SDL_GetRelativeMouseMode())
                    break; 
                 camera.processMouseMove(event.motion.xrel, event.motion.yrel);
                 break;
             case SDL_MOUSEWHEEL:
+                if(!SDL_GetRelativeMouseMode()) 
+                    break;
                 camera.processMouseWheel(event.wheel.y);
                 break;
             }

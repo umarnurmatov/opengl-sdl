@@ -22,7 +22,6 @@ struct Texture
 {
     GLuint id;
     enum Type { SPECULAR, DIFFUSE } type;
-    std::string path;
 };
     
 class Mesh    
@@ -30,9 +29,9 @@ class Mesh
 public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
-    std::vector<Texture> textures;
+    std::vector<Texture*> textures;
 
-    Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
+    Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture*>& textures);
     void draw(Shader &shader) const;
 
 private:
