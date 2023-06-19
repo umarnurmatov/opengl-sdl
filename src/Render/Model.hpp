@@ -30,7 +30,7 @@ class Model
 
         void loadModel(std::string path);
         void processNode(aiNode *node, const aiScene *scene);
-        Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+        void processMesh(Mesh &mesh, aiMesh *mesh_ai, const aiScene *scene);
         void loadMaterialTextures(std::vector<Texture*> &textures, aiMaterial *mat, aiTextureType type);
 };
 

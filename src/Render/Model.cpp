@@ -30,8 +30,9 @@ void Model::processNode(aiNode *node, const aiScene *scene)
 {
     for(size_t i = 0; i < node->mNumMeshes; i++)
     {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene));
+        aiMesh* mesh_ai = scene->mMeshes[node->mMeshes[i]];
+        meshes.push_back(Mesh{}); 
+        processMesh(meshes[meshes.size()-1], mesh_ai, scene);
     }
 
     for(size_t i = 0; i < node->mNumChildren; i++)
@@ -40,42 +41,38 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     }
 }
 
-Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
+void Model::processMesh(Mesh &mesh, aiMesh *mesh_ai, const aiScene *scene)
 {
-    std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
-    std::vector<Texture*> textures;
-
-    for(size_t i = 0; i < mesh->mNumVertices; i++)
+    for(size_t i = 0; i < mesh_ai->mNumVertices; i++)
     {
         Vertex v;
         auto aiVector3ToGLM = [](aiVector3D &v) -> glm::vec3 { return glm::vec3(v.x, v.y, v.z); };
-        v.pos = aiVector3ToGLM(mesh->mVertices[i]);
-        v.normal = aiVector3ToGLM(mesh->mNormals[i]);
+        v.pos = aiVector3ToGLM(mesh_ai->mVertices[i]);
+        v.normal = aiVector3ToGLM(mesh_ai->mNormals[i]);
 
-        if(mesh->mTextureCoords[0])
-            v.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        if(mesh_ai->mTextureCoords != nullptr)
+            v.texCoords = glm::vec2(mesh_ai->mTextureCoords[0][i].x, mesh_ai->mTextureCoords[0][i].y);
         else
             v.texCoords = glm::vec2(0.0f);
 
-        vertices.push_back(v);
+        mesh.vertices.push_back(v);
     }
 
-    for(size_t i = 0; i < mesh->mNumFaces; i++) 
+    for(size_t i = 0; i < mesh_ai->mNumFaces; i++) 
     {
-        aiFace face = mesh->mFaces[i];
+        aiFace face = mesh_ai->mFaces[i];
         for(size_t j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);
+            mesh.indices.push_back(face.mIndices[j]);
     }
 
-    if(mesh->mMaterialIndex >= 0)
+    if(mesh_ai->mMaterialIndex >= 0)
     {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        loadMaterialTextures(textures, material, aiTextureType_DIFFUSE);
-        loadMaterialTextures(textures, material, aiTextureType_SPECULAR);
+        aiMaterial *material = scene->mMaterials[mesh_ai->mMaterialIndex];
+        loadMaterialTextures(mesh.textures, material, aiTextureType_DIFFUSE);
+        loadMaterialTextures(mesh.textures, material, aiTextureType_SPECULAR);
     }
 
-    return Mesh(vertices, indices, textures);
+    mesh.setupMesh();
 }
 
 void Model::loadMaterialTextures(std::vector<Texture*> &textures, aiMaterial *material, aiTextureType textureType)
@@ -86,7 +83,6 @@ void Model::loadMaterialTextures(std::vector<Texture*> &textures, aiMaterial *ma
         aiString textureRelativePath_aiString;
         material->GetTexture(textureType, i, &textureRelativePath_aiString);
         std::string textureRelativePath = textureRelativePath_aiString.C_Str();
-        std::cout << textureRelativePath  << std::endl;
 
         if(loadedTextures.contains(textureRelativePath))
         {

@@ -3,13 +3,8 @@
 namespace Engine
 {
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture*>& textures)
+Mesh::Mesh()
 {
-    this->vertices = vertices;
-    this->indices = indices;
-    this->textures = textures;
-
-    setupMesh();
 }
 
 // for explanations see Material in shader.fs

@@ -31,12 +31,12 @@ public:
     std::vector<GLuint> indices;
     std::vector<Texture*> textures;
 
-    Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture*>& textures);
+    Mesh();
     void draw(Shader &shader) const;
+    void setupMesh();
 
 private:
     GLuint VAO, VBO, EBO;
-    void setupMesh();
 };
 
 };
